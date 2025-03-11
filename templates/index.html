@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Premium Web Interface</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      padding-top: 60px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
+    .form-control {
+      background-color: #333;
+      color: #ffffff;
+      border: none;
+    }
+    .form-control::placeholder {
+      color: #bbbbbb;
+    }
+    .form-label {
+      color: #ffffff;
+    }
+    .btn-primary {
+      background-color: #6200ea;
+      color: white;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #3700b3;
+    }
+    #videoPlayer {
+      max-width: 100%;
+    }
+    .alert-danger {
+      background-color: #d32f2f;
+      color: #ffffff;
+      border: none;
+    }
+    .spinner-border {
+      color: #6200ea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4 text-center">YouTube Premium Web Interface</h1>
+    <div class="card p-4">
+      <form id="videoForm">
+        <div class="mb-3">
+          <label for="youtubeUrl" class="form-label">YouTube Video URL</label>
+          <input type="text" class="form-control" id="youtubeUrl" placeholder="Enter YouTube video URL" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Load Video</button>
+      </form>
+      
+      <!-- Loading Spinner -->
+      <div id="loading" class="text-center mt-3" style="display: none;">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading video...</p>
+      </div>
+      
+      <!-- Video Container -->
+      <div id="videoContainer" class="mt-4" style="display: none;">
+        <video id="videoPlayer" controls width="640" height="360">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      
+      <!-- Error Message -->
+      <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('videoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      // Hide previous messages and video
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('videoContainer').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+
+      const url = document.getElementById('youtubeUrl').value;
+      
+      try {
+        const response = await fetch('/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        // Hide loading spinner
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.video_url) {
+          const videoPlayer = document.getElementById('videoPlayer');
+          videoPlayer.src = data.video_url;
+          document.getElementById('videoContainer').style.display = 'block';
+          videoPlayer.load();
+          videoPlayer.play();
+        } else if (data.error) {
+          const errorDiv = document.getElementById('errorMessage');
+          errorDiv.textContent = 'Error: ' + data.error;
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = 'An unexpected error occurred.';
+        errorDiv.style.display = 'block';
+      }
+    });
+  </script>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
